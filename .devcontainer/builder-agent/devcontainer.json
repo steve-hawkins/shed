@@ -1,0 +1,43 @@
+{
+  "name": "Shed — Headless Builder Agent",
+  "build": {
+    "dockerfile": "../base/Dockerfile",
+    "context": ".."
+  },
+  "remoteUser": "vscode",
+  "capAdd": [
+    "NET_ADMIN",
+    "NET_RAW"
+  ],
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [],
+      "codespaces": {
+        "repositories": {
+          "steve-hawkins/shed": {
+            "permissions": {
+              "contents": "write",
+              "pull_requests": "write",
+              "issues": "read"
+            }
+          }
+        }
+      }
+    }
+  },
+  "containerEnv": {
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "DOTNET_NOLOGO": "1",
+    "NUGET_XMLDOC_MODE": "skip"
+  },
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8gb",
+    "storage": "32gb"
+  },
+  "postStartCommand": "sudo /usr/local/bin/init-firewall.sh",
+  "postCreateCommand": "dotnet --info && semgrep --version && gitleaks version && dotnet stryker --version"
+}

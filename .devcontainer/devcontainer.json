@@ -4,6 +4,23 @@
     "dockerfile": "./base/Dockerfile",
     "context": "."
   },
+  "secrets": {
+    "GRAFANA_OTLP_ENDPOINT": {
+      "description": "Grafana Cloud OTLP HTTP endpoint URL (service.namespace=software-factory)"
+    },
+    "GRAFANA_OTLP_AUTH_HEADER": {
+      "description": "Grafana Cloud Basic or Bearer Authorization header for OTLP ingestion"
+    },
+    "LITELLM_MASTER_KEY": {
+      "description": "Master API key for LiteLLM AI Gateway administration"
+    },
+    "LITELLM_SALT_KEY": {
+      "description": "Durable encryption salt key for LiteLLM virtual keys in PostgreSQL"
+    },
+    "GEMINI_API_KEY": {
+      "description": "Google Gemini API key for models routed via LiteLLM (optional if unused)"
+    }
+  },
   "remoteUser": "vscode",
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
@@ -53,11 +70,26 @@
     "storage": "32gb"
   },
   "forwardPorts": [
+    4000,
+    4317,
+    4318,
     18888,
     5000,
     5001
   ],
   "portsAttributes": {
+    "4000": {
+      "label": "LiteLLM AI Gateway",
+      "onAutoForward": "silent"
+    },
+    "4317": {
+      "label": "OTel Collector (gRPC)",
+      "onAutoForward": "silent"
+    },
+    "4318": {
+      "label": "OTel Collector (HTTP)",
+      "onAutoForward": "silent"
+    },
     "18888": {
       "label": "Aspire Dashboard (OTel)",
       "onAutoForward": "notify"

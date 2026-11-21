@@ -1,3 +1,7 @@
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
 receivers:
   otlp:
     protocols:
@@ -10,6 +14,8 @@ processors:
   batch:
     send_batch_size: 256
     timeout: 5s
+  deltatocumulative:
+    max_stale: 24h
   resource:
     attributes:
       - key: service.namespace
@@ -25,6 +31,7 @@ exporters:
     verbosity: basic
 
 service:
+  extensions: [health_check]
   pipelines:
     traces:
       receivers: [otlp]
@@ -32,7 +39,7 @@ service:
       exporters: [otlphttp/grafana, debug]
     metrics:
       receivers: [otlp]
-      processors: [resource, batch]
+      processors: [resource, deltatocumulative, batch]
       exporters: [otlphttp/grafana, debug]
     logs:
       receivers: [otlp]

@@ -1,0 +1,74 @@
+{
+  "plan_name": "Google AI Pro",
+  "plan_monthly_gbp": 18.99,
+  "currency": "GBP",
+  "fx_note": "Reference API-equivalent GBP rates per 1M tokens (~0.79 GBP/USD) for estimating subscription ROI in Grafana. Actual billing under Google AI Pro is £18.99/month flat-rate.",
+  "models": {
+    "gemini-4-neon": {
+      "system": "google_gemini",
+      "input_per_1m": 1.58,
+      "cache_read_per_1m": 0.158,
+      "output_per_1m": 7.90
+    },
+    "gemini-4-carbon": {
+      "system": "google_gemini",
+      "input_per_1m": 1.58,
+      "cache_read_per_1m": 0.158,
+      "output_per_1m": 7.90
+    },
+    "gemini-4-argon": {
+      "system": "google_gemini",
+      "input_per_1m": 1.19,
+      "cache_read_per_1m": 0.119,
+      "output_per_1m": 5.93
+    },
+    "gemini-4-hydrogen": {
+      "system": "google_gemini",
+      "input_per_1m": 1.19,
+      "cache_read_per_1m": 0.119,
+      "output_per_1m": 5.93
+    },
+    "gemini-pro-orchestrator": {
+      "system": "google_gemini",
+      "input_per_1m": 1.58,
+      "cache_read_per_1m": 0.158,
+      "output_per_1m": 7.90
+    },
+    "gemini-3.8-flash": {
+      "system": "google_gemini",
+      "input_per_1m": 0.24,
+      "cache_read_per_1m": 0.024,
+      "output_per_1m": 1.98
+    },
+    "gemini-3.5-flash-lite": {
+      "system": "google_gemini",
+      "input_per_1m": 0.24,
+      "cache_read_per_1m": 0.024,
+      "output_per_1m": 1.98
+    },
+    "claude-opus-5-5": {
+      "system": "anthropic",
+      "input_per_1m": 11.85,
+      "cache_read_per_1m": 1.185,
+      "output_per_1m": 59.25
+    },
+    "claude-sonnet-5-5": {
+      "system": "anthropic",
+      "input_per_1m": 2.37,
+      "cache_read_per_1m": 0.237,
+      "output_per_1m": 11.85
+    },
+    "gpt-oss-120b": {
+      "system": "openai_compatible",
+      "input_per_1m": 0.40,
+      "cache_read_per_1m": 0.04,
+      "output_per_1m": 1.58
+    },
+    "default": {
+      "system": "google_gemini",
+      "input_per_1m": 1.19,
+      "cache_read_per_1m": 0.119,
+      "output_per_1m": 5.93
+    }
+  }
+}

@@ -1,19 +1,4 @@
 services:
-  litellm-db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: litellm
-      POSTGRES_PASSWORD: ${LITELLM_DB_PASSWORD:-litellm-local-dev}
-      POSTGRES_DB: litellm
-    volumes:
-      - litellm_pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U litellm -d litellm"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   otel-collector:
     build:
       context: .
@@ -28,8 +13,26 @@ services:
     ports:
       - "127.0.0.1:4317:4317"
       - "127.0.0.1:4318:4318"
+      - "127.0.0.1:13133:13133"
+
+  litellm-db:
+    profiles: ["litellm"]
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: litellm
+      POSTGRES_PASSWORD: ${LITELLM_DB_PASSWORD:-litellm-local-dev}
+      POSTGRES_DB: litellm
+    volumes:
+      - litellm_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U litellm -d litellm"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   litellm:
+    profiles: ["litellm"]
     build:
       context: .
       dockerfile_inline: |
@@ -43,8 +46,8 @@ services:
         condition: service_started
     command: ["--config", "/app/config.yaml", "--port", "4000"]
     environment:
-      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:?LITELLM_MASTER_KEY is required}
-      LITELLM_SALT_KEY: ${LITELLM_SALT_KEY:?LITELLM_SALT_KEY is required}
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-}
+      LITELLM_SALT_KEY: ${LITELLM_SALT_KEY:-}
       DATABASE_URL: postgresql://litellm:${LITELLM_DB_PASSWORD:-litellm-local-dev}@litellm-db:5432/litellm
       OTEL_SERVICE_NAME: litellm-proxy
       OTEL_EXPORTER: otlp_http

@@ -1,0 +1,215 @@
+{
+  "title": "Shed — AI Software Factory Observability & ROI",
+  "uid": "shed-ai-factory-roi",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "tags": ["shed", "software-factory", "ai-observability", "finops"],
+  "timezone": "browser",
+  "editable": true,
+  "templating": {
+    "list": [
+      {
+        "name": "DS_PROMETHEUS",
+        "label": "Metrics (Prometheus / Mimir)",
+        "type": "datasource",
+        "query": "prometheus",
+        "refresh": 1
+      },
+      {
+        "name": "DS_TEMPO",
+        "label": "Traces (Tempo)",
+        "type": "datasource",
+        "query": "tempo",
+        "refresh": 1
+      },
+      {
+        "name": "stage",
+        "label": "Stage",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "query": "label_values(shed_ai_turns_total, stage)",
+        "includeAll": true,
+        "multi": true,
+        "refresh": 2,
+        "current": { "text": "All", "value": "$__all" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Google AI Pro ROI Multiplier (API-Equiv ÷ £18.99)",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "yellow", "value": null },
+              { "color": "green", "value": 1 },
+              { "color": "super-light-green", "value": 3 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(shed_ai_estimated_cost_gbp_GBP_total{stage=~\"$stage\"}[$__range])) / 18.99"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Estimated API-Equivalent Spend",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyGBP",
+          "decimals": 4
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(shed_ai_estimated_cost_gbp_GBP_total{stage=~\"$stage\"}[$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Prompt Cache Savings",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyGBP",
+          "decimals": 4
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(shed_ai_cache_savings_gbp_GBP_total{stage=~\"$stage\"}[$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Prompt Cache Hit Ratio",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 1
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(shed_ai_tokens_total{stage=~\"$stage\",token_type=\"cache_read\"}[$__range])) / clamp_min(sum(increase(shed_ai_tokens_total{stage=~\"$stage\",token_type=~\"input|cache_read\"}[$__range])), 1)"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Tokens Consumed by Model & Type",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "drawStyle": "bars", "stacking": { "mode": "normal" } }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "{{model}} ({{token_type}})",
+          "expr": "sum by (model, token_type) (increase(shed_ai_tokens_total{stage=~\"$stage\"}[$__rate_interval]))"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Estimated API-Equivalent Spend by Stage & Issue",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyGBP"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "{{stage}} / issue #{{issue}}",
+          "expr": "sum by (stage, issue) (increase(shed_ai_estimated_cost_gbp_GBP_total{stage=~\"$stage\"}[$__rate_interval]))"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Agent Turns & Tool Calls",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 13 },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Turns ({{stage}} / {{termination_reason}})",
+          "expr": "sum by (stage, termination_reason) (increase(shed_ai_turns_total{stage=~\"$stage\"}[$__rate_interval]))"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Tool Errors ({{stage}})",
+          "expr": "sum by (stage) (increase(shed_ai_tool_calls_total{stage=~\"$stage\",status=\"error\"}[$__rate_interval]))"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Turn Wall-Clock Duration (seconds)",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 13 },
+      "fieldConfig": {
+        "defaults": { "unit": "s" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "{{stage}} / {{model}}",
+          "expr": "avg by (stage, model) (shed_ai_turn_duration_seconds{stage=~\"$stage\"})"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Recent Software Factory Traces (Tempo)",
+      "datasource": { "type": "tempo", "uid": "${DS_TEMPO}" },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 20 },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "traceqlSearch",
+          "query": "{resource.service.namespace=\"software-factory\"}",
+          "limit": 20
+        }
+      ]
+    }
+  ]
+}

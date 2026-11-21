@@ -60,12 +60,22 @@ All changes must comply with `.semgrep.yml` and the following engineering invari
 7. **No Swallowed Exceptions:** Never write empty `catch` blocks in `src/**`; log with structured context and rethrow or handle explicitly.
 8. **Domain Precision & Concurrency:** Guard against division-by-zero, verify unit/decimal precision (`kWh`, `gCO2eq`, currency rounding), check inclusive/exclusive time-window boundaries (`<` vs `<=`), and enforce idempotency and optimistic concurrency (`xmin`/row version) on writes.
 9. **Test Integrity (Anti-Gaming):** Never disable or skip tests (`[Fact(Skip = ...)]`, `[Theory(Skip = ...)]`) and never write tautological assertions (`Assert.True(true)`, `Assert.False(false)`, `Assert.Equal(x, x)`). Tests must verify meaningful persisted state, domain outcomes, and failure/boundary paths.
+10. **File Naming Convention:** Always use hyphens (`-`, kebab-case) instead of underscores (`_`) in new file and directory names (e.g., `otel-telemetry.py`, `model-pricing.json`). Only use underscores if using `-` fails in testing or is strictly required by language/framework tooling (e.g., an `import`ed Python module or C# `PascalCase.cs` type names).
 
 ---
 
 ## 5. AI Observability & FinOps Attribution
 
-When routing LLM calls through the local LiteLLM AI Gateway (`http://localhost:4000/v1/chat/completions`), include FinOps attribution metadata on every request:
+### Primary Path (`agy` → OTel Collector → Grafana Cloud)
+
+Every `agy` session, subagent, `/swarm` worker, and headless `agy -p` run in this repository automatically invokes `.agents/hooks.json` (`Stop` hook → `.agents/hooks/otel-telemetry.py`) to export OpenTelemetry traces and metrics (tokens, prompt-cache savings, tool counts, and estimated API-equivalent GBP cost) to `http://127.0.0.1:4318` → Grafana Cloud (`service.namespace=software-factory`).
+
+- When running headless factory tasks via `./infra/factory-observability/run-agent.sh`, pass `--stage`, `--issue`, `--lane`, and `--attempt` so spans and metrics carry accurate FinOps attribution.
+- Never log or export raw prompts, thinking text, tool arguments, secrets, or authorization headers.
+
+### Optional API Gateway Path (LiteLLM `--with-litellm`)
+
+When routing direct API calls through the optional LiteLLM AI Gateway (`http://localhost:4000/v1/chat/completions`), include FinOps attribution metadata on every request:
 
 ```json
 {

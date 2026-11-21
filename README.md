@@ -20,17 +20,38 @@ Repository rules and control-plane protections ensure automated Builder agents c
 
 ---
 
-## Local AI Observability Stack (LiteLLM + OpenTelemetry)
+## Local AI Observability & ROI Stack (`agy` → OTel Collector → Grafana Cloud)
 
-All required secrets (`LITELLM_MASTER_KEY`, `LITELLM_SALT_KEY`, `GRAFANA_OTLP_ENDPOINT`, `GRAFANA_OTLP_AUTH_HEADER`, and `GEMINI_API_KEY`) are documented in [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json) and injected exclusively via GitHub Codespaces secrets / runtime environment variables (no `.env` files on disk).
+By default, Shed ships AI telemetry directly from **Antigravity CLI (`agy`)** sessions (running on your Google AI Pro plan) via the protected [`.agents/hooks.json`](.agents/hooks.json) `Stop` hook → local **OpenTelemetry Collector (`127.0.0.1:4318`)** → **Grafana Cloud** (`service.namespace=software-factory`), with **zero Google AI Studio API billing required**.
 
-### Quick Start
+All required secrets (`GRAFANA_OTLP_ENDPOINT` and `GRAFANA_OTLP_AUTH_HEADER` for default OTel-only mode; plus `LITELLM_*` and provider keys if using the optional `--with-litellm` profile) are documented in [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json) and injected exclusively via GitHub Codespaces secrets / runtime environment variables (no `.env` files on disk).
+
+### Quick Start (Default: `agy` → OTel → Grafana Cloud)
 
 ```bash
-# Start PostgreSQL, OpenTelemetry Collector, and LiteLLM Proxy
+# Start OpenTelemetry Collector only (no LiteLLM or AI Studio API key required)
 ./infra/factory-observability/up.sh
 
-# Run end-to-end readiness, model alias, FinOps-tagged completion, and OTel export verification
+# Verify health, telemetry hook privacy/idempotency/fail-open, and Grafana Cloud OTLP export
+./infra/factory-observability/smoke-test-agy.sh
+
+# Optional: include a live headless `agy -p` turn in the smoke test
+./infra/factory-observability/smoke-test-agy.sh --live
+
+# Run a FinOps-tagged headless Builder or Critic task
+./infra/factory-observability/run-agent.sh \
+  --stage builder --issue 12 --lane feature \
+  --prompt "Implement the emissions calculation handler..."
+```
+
+Import [`infra/factory-observability/grafana-dashboard.json`](infra/factory-observability/grafana-dashboard.json) into Grafana Cloud to visualize **Google AI Pro ROI**, estimated API-equivalent spend vs. prompt-cache savings, token breakdown by model, tool error rates, and Tempo traces.
+
+### Optional API Gateway Mode (LiteLLM + PostgreSQL)
+
+For unattended CI runners or multi-provider API-key metering, start the full stack with `--with-litellm`:
+
+```bash
+./infra/factory-observability/up.sh --with-litellm
 ./infra/factory-observability/smoke-test.sh
 ```
 

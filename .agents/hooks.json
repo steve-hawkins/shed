@@ -1,0 +1,11 @@
+{
+  "shed-otel-telemetry": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "python3 ./hooks/otel-telemetry.py",
+        "timeout": 5
+      }
+    ]
+  }
+}

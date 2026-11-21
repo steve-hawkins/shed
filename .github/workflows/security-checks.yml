@@ -60,10 +60,14 @@ jobs:
       - name: Validate JSON files
         run: |
           set -euo pipefail
-          for file in $(find .github .devcontainer -type f -name '*.json' | sort); do
+          for file in $(find .github .devcontainer .agents infra/factory-observability -type f -name '*.json' | sort); do
             echo "Validating JSON: $file"
             jq empty "$file"
           done
+
+      - name: Validate Python telemetry hooks
+        run: |
+          python3 -m py_compile .agents/hooks/otel-telemetry.py
 
       - name: Validate YAML files
         run: |
@@ -86,16 +90,20 @@ jobs:
                   yaml.safe_load(fh)
           '
 
-      - name: Validate Docker Compose configuration
+      - name: Validate Docker Compose configuration (OTel-only & LiteLLM profiles)
         env:
-          LITELLM_MASTER_KEY: sk-ci-validation-placeholder
-          LITELLM_SALT_KEY: ci-validation-placeholder-salt
           GRAFANA_OTLP_ENDPOINT: https://otlp.example.invalid/otlp
           GRAFANA_OTLP_AUTH_HEADER: Basic Y2ktcGxhY2Vob2xkZXI=
-        run: docker compose -f infra/factory-observability/docker-compose.yml config --quiet
+        run: |
+          docker compose -f infra/factory-observability/docker-compose.yml config --quiet
+          LITELLM_MASTER_KEY=sk-ci-validation-placeholder \
+          LITELLM_SALT_KEY=ci-validation-placeholder-salt \
+          docker compose -f infra/factory-observability/docker-compose.yml --profile litellm config --quiet
 
       - name: Check shell script syntax
         run: |
           bash -n .devcontainer/automation/init-firewall.sh
           bash -n infra/factory-observability/up.sh
           bash -n infra/factory-observability/smoke-test.sh
+          bash -n infra/factory-observability/smoke-test-agy.sh
+          bash -n infra/factory-observability/run-agent.sh

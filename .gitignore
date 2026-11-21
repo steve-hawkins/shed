@@ -26,6 +26,10 @@ project.fragment.lock.json
 *.swo
 *~
 
+# Python bytecode artifacts (telemetry hooks)
+__pycache__/
+*.py[cod]
+
 # OS artifacts
 .DS_Store
 Thumbs.db

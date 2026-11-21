@@ -34,7 +34,7 @@ RUN pipx install semgrep \
     && dotnet dev-certs https --trust || true
 
 # Copy firewall script and allow vscode to run ONLY this script via sudo
-COPY builder-agent/init-firewall.sh /usr/local/bin/init-firewall.sh
+COPY automation/init-firewall.sh /usr/local/bin/init-firewall.sh
 RUN chmod 0755 /usr/local/bin/init-firewall.sh \
     && chown root:root /usr/local/bin/init-firewall.sh \
     && echo "vscode ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/builder-firewall \

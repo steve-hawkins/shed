@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/dotnet:10.0-resolute
+FROM mcr.microsoft.com/devcontainers/dotnet:11.0-resolute
 
 # Install Python/pipx for Semgrep and curl/jq for verification scripts
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \

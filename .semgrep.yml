@@ -1,0 +1,143 @@
+rules:
+  # ============================================================================
+  # 1. API & AUTHORIZATION GUARDRAILS
+  # ============================================================================
+  - id: csharp-require-explicit-controller-auth
+    patterns:
+      - pattern: |
+          public class $CONTROLLER : ControllerBase { ... }
+      - pattern-not: |
+          [Authorize(...)]
+          public class $CONTROLLER : ControllerBase { ... }
+      - pattern-not: |
+          [Authorize]
+          public class $CONTROLLER : ControllerBase { ... }
+      - pattern-not: |
+          [AllowAnonymous]
+          public class $CONTROLLER : ControllerBase { ... }
+    message: "All ASP.NET Core controllers must explicitly declare [Authorize] or [AllowAnonymous]."
+    languages: [csharp]
+    severity: ERROR
+
+  - id: csharp-forbid-allow-anonymous-in-src
+    pattern: "[AllowAnonymous]"
+    paths:
+      include:
+        - "src/Api/**"
+    message: "AI agents must not add [AllowAnonymous] to endpoints without explicit human review."
+    languages: [csharp]
+    severity: WARNING
+
+  # ============================================================================
+  # 2. DATA ACCESS & ARCHITECTURAL BOUNDARIES
+  # ============================================================================
+  - id: csharp-forbid-raw-sql-interpolation
+    patterns:
+      - pattern-either:
+          - pattern: $CTX.Database.ExecuteSqlRaw($"...{$VAR}...")
+          - pattern: $CTX.Database.ExecuteSqlRawAsync($"...{$VAR}...", ...)
+          - pattern: $SET.FromSqlRaw($"...{$VAR}...")
+    message: "Do not pass interpolated strings to ExecuteSqlRaw/FromSqlRaw; use ExecuteSqlInterpolated or parameterized queries."
+    languages: [csharp]
+    severity: ERROR
+
+  - id: csharp-forbid-dbcontext-in-api-endpoints
+    patterns:
+      - pattern-either:
+          - pattern: $APP.MapGet($ROUTE, (..., $DB $CTX, ...) => ...)
+          - pattern: $APP.MapPost($ROUTE, (..., $DB $CTX, ...) => ...)
+          - pattern: $APP.MapPut($ROUTE, (..., $DB $CTX, ...) => ...)
+          - pattern: $APP.MapDelete($ROUTE, (..., $DB $CTX, ...) => ...)
+      - metavariable-regex:
+          metavariable: $DB
+          regex: ".*DbContext$"
+    paths:
+      include:
+        - "src/Api/**"
+    message: "Minimal API endpoints must dispatch commands/queries via Application handlers rather than injecting DbContext directly."
+    languages: [csharp]
+    severity: ERROR
+
+  # ============================================================================
+  # 3. SECURITY & SECRET HYGIENE
+  # ============================================================================
+  - id: csharp-forbid-insecure-deserializers
+    pattern-either:
+      - pattern: new BinaryFormatter(...)
+      - pattern: new JavaScriptSerializer(...)
+      - pattern: new NetDataContractSerializer(...)
+    message: "Insecure legacy deserializer detected; use System.Text.Json."
+    languages: [csharp]
+    severity: ERROR
+
+  - id: csharp-forbid-tls-validation-bypass
+    pattern: ServerCertificateCustomValidationCallback = ...
+    message: "Do not bypass TLS certificate validation in application code."
+    languages: [csharp]
+    severity: ERROR
+
+  - id: csharp-forbid-hardcoded-connection-strings
+    patterns:
+      - pattern: |
+          "$STR"
+      - metavariable-regex:
+          metavariable: $STR
+          regex: "(?i).*(Host=|Server=|Data Source=).*(Password=|Pwd=).*"
+    paths:
+      exclude:
+        - "tests/**"
+    message: "Hardcoded database connection string with credentials detected; inject via Aspire / configuration."
+    languages: [csharp]
+    severity: ERROR
+
+  # ============================================================================
+  # 4. RELIABILITY & OBSERVABILITY INVARIANTS
+  # ============================================================================
+  - id: csharp-forbid-sync-over-async
+    pattern-either:
+      - pattern: $TASK.Result
+      - pattern: $TASK.Wait(...)
+      - pattern: $TASK.GetAwaiter().GetResult()
+    paths:
+      include:
+        - "src/**"
+    message: "Avoid sync-over-async (.Result / .Wait() / .GetResult()) in src/; await tasks asynchronously."
+    languages: [csharp]
+    severity: ERROR
+
+  - id: csharp-forbid-empty-catch-blocks
+    pattern: |
+      try { ... }
+      catch ($EX) { }
+    paths:
+      include:
+        - "src/**"
+    message: "Swallowing exceptions in an empty catch block hides runtime telemetry; log and rethrow or handle explicitly."
+    languages: [csharp]
+    severity: ERROR
+
+  # ============================================================================
+  # 5. ANTI-GAMING GUARDRAILS FOR AGENT-GENERATED TESTS
+  # ============================================================================
+  - id: csharp-forbid-skipped-tests
+    pattern-either:
+      - pattern: '[Fact(Skip = $REASON)]'
+      - pattern: '[Theory(Skip = $REASON)]'
+    paths:
+      include:
+        - "tests/**"
+    message: "Agents must not skip failing unit or integration tests using Skip=."
+    languages: [csharp]
+    severity: ERROR
+
+  - id: csharp-forbid-tautological-assertions
+    pattern-either:
+      - pattern: Assert.True(true);
+      - pattern: Assert.False(false);
+      - pattern: Assert.Equal($X, $X);
+    paths:
+      include:
+        - "tests/**"
+    message: "Tautological assertion detected; tests must assert meaningful behavioral outcomes."
+    languages: [csharp]
+    severity: ERROR

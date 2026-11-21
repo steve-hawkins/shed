@@ -43,8 +43,8 @@ services:
       OTEL_EXPORTER: otlp_http
       OTEL_ENDPOINT: http://otel-collector:4318/v1/traces
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      # ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     volumes:
       - ./litellm_config.yaml:/app/config.yaml:ro

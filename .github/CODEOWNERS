@@ -2,8 +2,9 @@
 * @steve-hawkins
 
 # Factory orchestration, CI/CD & enforcement rules (agents must never weaken these)
-/.github/ @steve-hawkins
+/.agents/ @steve-hawkins
 /.devcontainer/ @steve-hawkins
+/.github/ @steve-hawkins
 /.semgrep.yml @steve-hawkins
 /stryker-config.json @steve-hawkins
 /AGENTS.md @steve-hawkins

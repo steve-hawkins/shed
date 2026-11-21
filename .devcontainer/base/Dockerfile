@@ -21,6 +21,13 @@ RUN ARCH=$(dpkg --print-architecture) \
     | tar -xz -C /usr/local/bin gitleaks \
     && chmod +x /usr/local/bin/gitleaks
 
+# Copy firewall script and allow vscode to run ONLY this script via sudo
+COPY automation/init-firewall.sh /usr/local/bin/init-firewall.sh
+RUN chmod 0755 /usr/local/bin/init-firewall.sh \
+    && chown root:root /usr/local/bin/init-firewall.sh \
+    && echo "vscode ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/builder-firewall \
+    && chmod 0440 /etc/sudoers.d/builder-firewall
+
 # Install Semgrep and Stryker.NET as the non-root vscode user
 USER vscode
 ENV PIPX_HOME=/home/vscode/.local/pipx \
@@ -32,10 +39,3 @@ ENV PIPX_HOME=/home/vscode/.local/pipx \
 RUN pipx install semgrep \
     && dotnet tool install --global dotnet-stryker \
     && dotnet dev-certs https --trust || true
-
-# Copy firewall script and allow vscode to run ONLY this script via sudo
-COPY automation/init-firewall.sh /usr/local/bin/init-firewall.sh
-RUN chmod 0755 /usr/local/bin/init-firewall.sh \
-    && chown root:root /usr/local/bin/init-firewall.sh \
-    && echo "vscode ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/builder-firewall \
-    && chmod 0440 /etc/sudoers.d/builder-firewall

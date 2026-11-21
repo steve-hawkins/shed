@@ -1,0 +1,49 @@
+name: Control Plane Path Guard
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  path-guard:
+    name: path-guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out base & head for diff
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Block unauthorized edits to control-plane files
+        env:
+          PR_AUTHOR: ${{ github.actor }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
+        run: |
+          # Define protected control-plane paths
+          PROTECTED_REGEX='^(\.github/|\.devcontainer/|\.semgrep\.yml$|stryker-config\.json$|AGENTS\.md$|docs/FACTORY_ARCHITECTURE\.md$)'
+
+          # Find any modified, added, or deleted files matching protected paths
+          CHANGED_PROTECTED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -E "$PROTECTED_REGEX" || true)
+
+          if [ -z "$CHANGED_PROTECTED" ]; then
+            echo "No protected control-plane files were modified."
+            exit 0
+          fi
+
+          echo "Protected files modified:"
+          echo "$CHANGED_PROTECTED"
+
+          # Allow only your explicit human GitHub handle (reject bot/app actors)
+          if [ "$PR_AUTHOR" != "steve-hawkins" ]; then
+            echo "::error::Actor '$PR_AUTHOR' is not authorized to modify control-plane files."
+            exit 1
+          fi
+
+          echo "Authorized human actor ($PR_AUTHOR) verified."

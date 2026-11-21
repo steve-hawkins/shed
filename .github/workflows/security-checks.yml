@@ -1,0 +1,101 @@
+name: Security & Config Enforcement
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Gitleaks CLI (v8.21.2)
+        run: |
+          GITLEAKS_VERSION=8.21.2
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar -xz -C /usr/local/bin gitleaks
+          chmod +x /usr/local/bin/gitleaks
+          gitleaks version
+
+      - name: Scan git history and workspace for secrets
+        run: gitleaks detect --source . --redact --verbose
+
+  semgrep:
+    name: semgrep
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Semgrep
+        run: |
+          pipx install semgrep
+          semgrep --version
+
+      - name: Validate Semgrep ruleset
+        run: semgrep --config .semgrep.yml --validate
+
+      - name: Run Semgrep enforcement rules
+        run: semgrep --config .semgrep.yml --error .
+
+  config-validation:
+    name: config-validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate JSON files
+        run: |
+          set -euo pipefail
+          for file in $(find .github .devcontainer -type f -name '*.json' | sort); do
+            echo "Validating JSON: $file"
+            jq empty "$file"
+          done
+
+      - name: Validate YAML files
+        run: |
+          set -euo pipefail
+          python3 -m venv /tmp/yaml-check
+          /tmp/yaml-check/bin/pip install --quiet pyyaml
+          /tmp/yaml-check/bin/python -c '
+          import glob, yaml
+
+          paths = sorted(set(
+              glob.glob(".semgrep.yml")
+              + glob.glob(".github/**/*.yml", recursive=True)
+              + glob.glob(".github/**/*.yaml", recursive=True)
+              + glob.glob("infra/factory-observability/*.yml")
+              + glob.glob("infra/factory-observability/*.yaml")
+          ))
+          for path in paths:
+              print(f"Validating YAML: {path}")
+              with open(path, "r", encoding="utf-8") as fh:
+                  yaml.safe_load(fh)
+          '
+
+      - name: Validate Docker Compose configuration
+        env:
+          LITELLM_MASTER_KEY: sk-ci-validation-placeholder
+          LITELLM_SALT_KEY: ci-validation-placeholder-salt
+          GRAFANA_OTLP_ENDPOINT: https://otlp.example.invalid/otlp
+          GRAFANA_OTLP_AUTH_HEADER: Basic Y2ktcGxhY2Vob2xkZXI=
+        run: docker compose -f infra/factory-observability/docker-compose.yml config --quiet
+
+      - name: Check shell script syntax
+        run: |
+          bash -n .devcontainer/automation/init-firewall.sh
+          bash -n infra/factory-observability/up.sh
+          bash -n infra/factory-observability/smoke-test.sh

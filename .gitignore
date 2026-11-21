@@ -1,0 +1,31 @@
+# Secret & environment files (defense-in-depth — secrets must come from runtime env / Codespaces secrets only)
+.env
+.env.*
+*.env
+
+# .NET build, test, and mutation-testing artifacts
+bin/
+obj/
+TestResults/
+StrykerOutput/
+BenchmarkDotNet.Artifacts/
+artifacts/
+project.lock.json
+project.fragment.lock.json
+*.nupkg
+*.snupkg
+
+# Visual Studio / IDE / Editor artifacts
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.swp
+*.swo
+*~
+
+# OS artifacts
+.DS_Store
+Thumbs.db

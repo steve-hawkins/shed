@@ -4,31 +4,37 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: litellm
-      POSTGRES_PASSWORD: ${LITELLM_DB_PASSWORD}
+      POSTGRES_PASSWORD: ${LITELLM_DB_PASSWORD:-litellm-local-dev}
       POSTGRES_DB: litellm
     volumes:
       - litellm_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U litellm"]
+      test: ["CMD-SHELL", "pg_isready -U litellm -d litellm"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM otel/opentelemetry-collector-contrib:0.120.0
+        COPY otel-collector-config.yml /etc/otelcol-contrib/config.yaml
     restart: unless-stopped
     command: ["--config=/etc/otelcol-contrib/config.yaml"]
     environment:
-      GRAFANA_OTLP_ENDPOINT: ${GRAFANA_OTLP_ENDPOINT}
-      GRAFANA_OTLP_AUTH_HEADER: ${GRAFANA_OTLP_AUTH_HEADER}
-    volumes:
-      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+      GRAFANA_OTLP_ENDPOINT: ${GRAFANA_OTLP_ENDPOINT:?GRAFANA_OTLP_ENDPOINT is required}
+      GRAFANA_OTLP_AUTH_HEADER: ${GRAFANA_OTLP_AUTH_HEADER:?GRAFANA_OTLP_AUTH_HEADER is required}
     ports:
-      - "4317:4317"
-      - "4318:4318"
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
 
   litellm:
-    image: ghcr.io/berriai/litellm:main-latest
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM ghcr.io/berriai/litellm:main-stable
+        COPY litellm-config.yml /app/config.yaml
     restart: unless-stopped
     depends_on:
       litellm-db:
@@ -37,19 +43,25 @@ services:
         condition: service_started
     command: ["--config", "/app/config.yaml", "--port", "4000"]
     environment:
-      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
-      LITELLM_SALT_KEY: ${LITELLM_SALT_KEY}
-      DATABASE_URL: postgresql://litellm:${LITELLM_DB_PASSWORD}@litellm-db:5432/litellm
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:?LITELLM_MASTER_KEY is required}
+      LITELLM_SALT_KEY: ${LITELLM_SALT_KEY:?LITELLM_SALT_KEY is required}
+      DATABASE_URL: postgresql://litellm:${LITELLM_DB_PASSWORD:-litellm-local-dev}@litellm-db:5432/litellm
+      OTEL_SERVICE_NAME: litellm-proxy
       OTEL_EXPORTER: otlp_http
       OTEL_ENDPOINT: http://otel-collector:4318/v1/traces
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
-      # OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      # ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-    volumes:
-      - ./litellm_config.yaml:/app/config.yaml:ro
     ports:
-      - "4000:4000"
+      - "127.0.0.1:4000:4000"
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:4000/health/readiness')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
 
 volumes:
   litellm_pgdata:

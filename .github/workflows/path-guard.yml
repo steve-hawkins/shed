@@ -22,12 +22,13 @@ jobs:
 
       - name: Block unauthorized edits to control-plane files
         env:
-          PR_AUTHOR: ${{ github.actor }}
+          TRIGGER_ACTOR: ${{ github.actor }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login || github.actor }}
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
         run: |
           # Define protected control-plane paths
-          PROTECTED_REGEX='^(\.github/|\.devcontainer/|\.semgrep\.yml$|stryker-config\.json$|AGENTS\.md$|docs/FACTORY_ARCHITECTURE\.md$)'
+          PROTECTED_REGEX='^(\.github/|\.devcontainer/|\.agents/|infra/factory-observability/|\.semgrep\.yml$|stryker-config\.json$|AGENTS\.md$|docs/FACTORY_ARCHITECTURE\.md$)'
 
           # Find any modified, added, or deleted files matching protected paths
           CHANGED_PROTECTED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -E "$PROTECTED_REGEX" || true)
@@ -40,10 +41,10 @@ jobs:
           echo "Protected files modified:"
           echo "$CHANGED_PROTECTED"
 
-          # Allow only your explicit human GitHub handle (reject bot/app actors)
-          if [ "$PR_AUTHOR" != "steve-hawkins" ]; then
-            echo "::error::Actor '$PR_AUTHOR' is not authorized to modify control-plane files."
+          # Allow only your explicit human GitHub handle for both PR author and workflow trigger actor
+          if [ "$PR_AUTHOR" != "steve-hawkins" ] || [ "$TRIGGER_ACTOR" != "steve-hawkins" ]; then
+            echo "::error::Unauthorized control-plane modification (PR author: '$PR_AUTHOR', trigger actor: '$TRIGGER_ACTOR')."
             exit 1
           fi
 
-          echo "Authorized human actor ($PR_AUTHOR) verified."
+          echo "Authorized human actor verified (PR author: $PR_AUTHOR, trigger actor: $TRIGGER_ACTOR)."

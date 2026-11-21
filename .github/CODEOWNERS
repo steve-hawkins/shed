@@ -11,8 +11,7 @@
 /docs/FACTORY_ARCHITECTURE.md @steve-hawkins
 
 # Observability & FinOps gateway configuration
-/infra/litellm/ @steve-hawkins
-/infra/otel/ @steve-hawkins
+/infra/factory-observability/ @steve-hawkins
 
 # .NET 10 / Cloud Carbon & Compute Telemetry Auditor solution
 /src/Domain/ @steve-hawkins

@@ -1,28 +1,21 @@
 model_list:
-  # - model_name: factory-fast
-  #   litellm_params:
-  #     model: openai/gpt-4o-mini
-  #     api_key: os.environ/OPENAI_API_KEY
-  # - model_name: factory-builder
-  #   litellm_params:
-  #     model: anthropic/claude-3-7-sonnet-20250219
-  #     api_key: os.environ/ANTHROPIC_API_KEY
   - model_name: factory-fast
     litellm_params:
-      model: openai/gemini-3.5-flash-lite
+      model: gemini/gemini-3.5-flash-lite
       api_key: os.environ/GEMINI_API_KEY
   - model_name: factory-builder
     litellm_params:
-      model: anthropic/gemini-4-hydrogen
+      model: gemini/gemini-4-hydrogen
       api_key: os.environ/GEMINI_API_KEY
   - model_name: factory-complex
     litellm_params:
-      model: anthropic/gemini-4-neon
+      model: gemini/gemini-4-carbon
       api_key: os.environ/GEMINI_API_KEY
+  # Cross-family Critic (uncomment once ANTHROPIC_API_KEY is added to Codespaces secrets):
   # - model_name: factory-critic
   #   litellm_params:
-  #     model: gemini/claude-sonnet-5-5-medium
-  #     api_key: os.environ/GEMINI_API_KEY
+  #     model: anthropic/claude-sonnet-4-5
+  #     api_key: os.environ/ANTHROPIC_API_KEY
 
 litellm_settings:
   callbacks: ["otel"]

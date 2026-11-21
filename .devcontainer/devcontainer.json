@@ -1,8 +1,8 @@
 {
   "name": "Shed — IDE Review & Orchestrator",
   "build": {
-    "dockerfile": "../base/Dockerfile",
-    "context": ".."
+    "dockerfile": "./base/Dockerfile",
+    "context": "."
   },
   "remoteUser": "vscode",
   "features": {

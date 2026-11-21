@@ -1,0 +1,25 @@
+# Default owner for the repository
+* @steve-hawkins
+
+# Factory orchestration, CI/CD & enforcement rules (agents must never weaken these)
+/.github/ @steve-hawkins
+/.devcontainer/ @steve-hawkins
+/.semgrep.yml @steve-hawkins
+/stryker-config.json @steve-hawkins
+/AGENTS.md @steve-hawkins
+/docs/FACTORY_ARCHITECTURE.md @steve-hawkins
+
+# Observability & FinOps gateway configuration
+/infra/litellm/ @steve-hawkins
+/infra/otel/ @steve-hawkins
+
+# .NET 10 / Cloud Carbon & Compute Telemetry Auditor solution
+/src/Domain/ @steve-hawkins
+/src/Application/ @steve-hawkins
+/src/Infrastructure/ @steve-hawkins
+/src/Api/ @steve-hawkins
+/src/Worker/ @steve-hawkins
+/src/AppHost/ @steve-hawkins
+/tests/Architecture.Tests/ @steve-hawkins
+/tests/Domain.UnitTests/ @steve-hawkins
+/tests/Integration.Tests/ @steve-hawkins

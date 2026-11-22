@@ -22,8 +22,11 @@ jobs:
 
       - name: Block unauthorized edits to control-plane files
         env:
+          GH_TOKEN: ${{ github.token }}
           TRIGGER_ACTOR: ${{ github.actor }}
           PR_AUTHOR: ${{ github.event.pull_request.user.login || github.actor }}
+          PR_AUTHOR_ID: ${{ github.event.pull_request.user.id || '' }}
+          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
         run: |
@@ -41,10 +44,44 @@ jobs:
           echo "Protected files modified:"
           echo "$CHANGED_PROTECTED"
 
-          # Allow only your explicit human GitHub handle for both PR author and workflow trigger actor
-          if [ "$PR_AUTHOR" != "steve-hawkins" ] || [ "$TRIGGER_ACTOR" != "steve-hawkins" ]; then
-            echo "::error::Unauthorized control-plane modification (PR author: '$PR_AUTHOR', trigger actor: '$TRIGGER_ACTOR')."
-            exit 1
+          # 1. Human repository owner has full control-plane access
+          if [ "$PR_AUTHOR" = "steve-hawkins" ] && [ "$TRIGGER_ACTOR" = "steve-hawkins" ]; then
+            echo "Authorized human actor verified (PR author: $PR_AUTHOR, trigger actor: $TRIGGER_ACTOR)."
+            exit 0
           fi
 
-          echo "Authorized human actor verified (PR author: $PR_AUTHOR, trigger actor: $TRIGGER_ACTOR)."
+          # 2. Allow Dependabot ONLY for dependency-managed files configured in .github/dependabot.yml
+          DEPENDABOT_ALLOWED_REGEX='^(\.github/workflows/[^/]+\.ya?ml$|\.devcontainer/base/.*Dockerfile[^/]*$|infra/factory-observability/(docker-)?compose[^/]*\.ya?ml$)'
+
+          if [ "$PR_AUTHOR" = "dependabot[bot]" ] \
+            && { [ -z "$PR_AUTHOR_ID" ] || [ "$PR_AUTHOR_ID" = "49699333" ]; } \
+            && { [ "$TRIGGER_ACTOR" = "dependabot[bot]" ] || [ "$TRIGGER_ACTOR" = "steve-hawkins" ]; }; then
+
+            DISALLOWED=$(echo "$CHANGED_PROTECTED" | grep -Ev "$DEPENDABOT_ALLOWED_REGEX" || true)
+            if [ -n "$DISALLOWED" ]; then
+              echo "::error::Dependabot PR modifies control-plane files outside its allowed scope:"
+              echo "$DISALLOWED"
+              exit 1
+            fi
+
+            # Verify every commit on the PR is a verified Dependabot commit or authored by steve-hawkins
+            if [ -n "$PR_NUMBER" ]; then
+              BAD_COMMITS=$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/commits" --paginate \
+                --jq '.[] | select(
+                  (.author.login != "dependabot[bot]" and .author.login != "steve-hawkins") or
+                  (.author.login == "dependabot[bot]" and .commit.verification.verified != true)
+                ) | "\(.sha) (author: \(.author.login // "unknown"), verified: \(.commit.verification.verified))"')
+
+              if [ -n "$BAD_COMMITS" ]; then
+                echo "::error::Dependabot PR contains unverified or unauthorized commits:"
+                echo "$BAD_COMMITS"
+                exit 1
+              fi
+            fi
+
+            echo "Authorized Dependabot update to dependency-managed control-plane files."
+            exit 0
+          fi
+
+          echo "::error::Unauthorized control-plane modification (PR author: '$PR_AUTHOR', trigger actor: '$TRIGGER_ACTOR')."
+          exit 1

@@ -2,6 +2,8 @@
 
 **Goal:** Shedding idle compute, excess spend, and carbon intensity — a `.NET 10` cost and carbon auditing and recommendations tool built inside a policy-enforced, metered AI software factory.
 
+We will get onto this once the base software factory is set up...
+
 ---
 
 ## Enforcement Base & Governance

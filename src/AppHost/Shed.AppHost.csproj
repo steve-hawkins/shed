@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <UserSecretsId>shed-apphost-local</UserSecretsId>
+    <!-- Standard dotnet build/run workflow without requiring the external Aspire CLI bundle -->
+    <NoWarn>$(NoWarn);ASPIRE010</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Web\Shed.Web.csproj" ReferenceOutputAssembly="false" />
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+    <PackageReference Include="Aspire.Hosting.Dotnet" />
+  </ItemGroup>
+
+</Project>

@@ -21,7 +21,7 @@ Perform a strictly **read-only** principal-engineer and security audit of propos
 ## 2. Audit Checklist
 
 ### A. Domain Invariants & .NET 10 Correctness
-- **LTS-Only .NET Policy:** Immediately **FAIL** if the diff introduces STS (odd-numbered, e.g., `.NET 11` / `net11.0` / `11.x`) SDKs, Docker base images, `<TargetFramework>` values, or `Microsoft.*` / `System.*` / `Aspire.*` framework packages. Shed exclusively targets `.NET` LTS (even-numbered) releases (currently `.NET 10` / `net10.0`).
+- **LTS-Only .NET Policy:** Immediately **FAIL** if the diff introduces STS (odd-numbered, e.g., `.NET 11` / `net11.0`) SDKs (`global.json`), Docker base images, or `<TargetFramework>` / `<TargetFrameworks>` values. Shed exclusively targets `.NET` LTS (even-numbered) releases (currently `.NET 10` / `net10.0`). Ignore NuGet package dependency versions (direct or transitive) as long as the target framework remains LTS.
 - **Clean Architecture Boundaries:** Verify `src/Domain` has zero dependencies on EF Core, RabbitMQ/MassTransit/Wolverine, or ASP.NET Core, and `src/Api` endpoints dispatch through `src/Application` rather than querying `DbContext` directly.
 - **State & Idempotency:** Verify write/settlement/ingestion operations enforce idempotency keys, optimistic concurrency (`xmin`/row version), and valid state-machine transitions.
 - **Async & Cancellation Safety:** Flag any blocking calls (`.Result`, `.Wait()`, `.GetAwaiter().GetResult()`), missing `CancellationToken` propagation, or swallowed exceptions in empty `catch` blocks.

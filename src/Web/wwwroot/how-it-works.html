@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>How It Works — Shed</title>
+  <meta name="description" content="How Shed plans to ingest cloud telemetry, calculate cost and carbon intensity, and generate reduction recommendations." />
+  <link rel="stylesheet" href="/css/site.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <img src="/img/shed-mark.svg" alt="" width="32" height="32" />
+        <span>shed</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="/how-it-works" aria-current="page">How it works</a>
+        <a href="/recommendations">Recommendations</a>
+        <a href="/telemetry">Telemetry</a>
+        <a class="btn btn-primary" href="/early-access">Early preview</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <section class="page-hero">
+      <div class="container">
+        <span class="eyebrow">Architecture preview</span>
+        <h1>From raw infrastructure signals to concrete savings.</h1>
+        <p class="lead">
+          Shed combines billing data, workload utilization, and regional grid carbon intensity into a
+          repeatable auditing pipeline.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="notice">
+          Static placeholder content: automated cloud connectors and live auditing workers are upcoming milestones.
+        </div>
+
+        <div class="grid-3">
+          <article class="card">
+            <span class="pill">Step 1</span>
+            <h3>Ingest usage &amp; billing</h3>
+            <p>
+              Collect read-only cloud utilization metrics, instance inventories, and cost exports
+              on a scheduled cadence with idempotent ingestion.
+            </p>
+          </article>
+          <article class="card">
+            <span class="pill">Step 2</span>
+            <h3>Model cost &amp; carbon</h3>
+            <p>
+              Apply deterministic domain math to compute kWh consumption, regional gCO&#x2082;eq
+              emissions, idle windows, and currency spend per service.
+            </p>
+          </article>
+          <article class="card">
+            <span class="pill">Step 3</span>
+            <h3>Recommend reductions</h3>
+            <p>
+              Surface ranked engineering actions—rightsizing, off-hours shutdowns, and lower-carbon
+              placement—with transparent before/after estimates.
+            </p>
+          </article>
+        </div>
+
+        <div class="section">
+          <div class="actions">
+            <a class="btn btn-primary" href="/recommendations">Browse sample recommendations</a>
+            <a class="btn btn-secondary" href="/">Back to landing page</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span>&copy; Shed &middot; Built on .NET 10 &amp; OpenTelemetry</span>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="/">Home</a>
+        <a href="/recommendations">Recommendations</a>
+        <a href="/telemetry">Telemetry</a>
+        <a href="/early-access">Early preview</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

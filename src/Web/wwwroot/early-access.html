@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Early Preview — Shed</title>
+  <meta name="description" content="Shed early preview status and upcoming platform milestones." />
+  <link rel="stylesheet" href="/css/site.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <img src="/img/shed-mark.svg" alt="" width="32" height="32" />
+        <span>shed</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="/how-it-works">How it works</a>
+        <a href="/recommendations">Recommendations</a>
+        <a href="/telemetry">Telemetry</a>
+        <a class="btn btn-primary" href="/early-access" aria-current="page">Early preview</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <section class="page-hero">
+      <div class="container">
+        <span class="eyebrow">Foundation milestone</span>
+        <h1>Shed is currently in active early build.</h1>
+        <p class="lead">
+          We are laying the clean .NET 10 foundation first—starting with this OpenTelemetry-instrumented
+          static web app before adding cloud cost and carbon auditing pipelines.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="grid-3">
+          <article class="card">
+            <span class="pill">Now live</span>
+            <h3>Base Web App &amp; OTel</h3>
+            <p>
+              Static landing experience on .NET 10 with Aspire AppHost orchestration and OTLP
+              observability for both local dashboards and collectors.
+            </p>
+          </article>
+          <article class="card">
+            <span class="pill">Next</span>
+            <h3>Domain &amp; Emissions Math</h3>
+            <p>
+              Pure domain models for compute energy (kWh), regional carbon intensity (gCO&#x2082;eq),
+              and cloud spend attribution.
+            </p>
+          </article>
+          <article class="card">
+            <span class="pill">Planned</span>
+            <h3>Automated Recommendations</h3>
+            <p>
+              Background auditing workers that detect idle compute and publish prioritized reduction
+              playbooks.
+            </p>
+          </article>
+        </div>
+
+        <div class="section">
+          <div class="actions">
+            <a class="btn btn-primary" href="/">Return to landing page</a>
+            <a class="btn btn-secondary" href="/recommendations">View sample recommendations</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span>&copy; Shed &middot; Built on .NET 10 &amp; OpenTelemetry</span>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="/">Home</a>
+        <a href="/how-it-works">How it works</a>
+        <a href="/recommendations">Recommendations</a>
+        <a href="/telemetry">Telemetry</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

@@ -38,7 +38,8 @@
           { "context": "path-guard", "integration_id": 15368 },
           { "context": "gitleaks", "integration_id": 15368 },
           { "context": "semgrep", "integration_id": 15368 },
-          { "context": "config-validation", "integration_id": 15368 }
+          { "context": "config-validation", "integration_id": 15368 },
+          { "context": "build-and-test", "integration_id": 15368 }
         ]
       }
     }

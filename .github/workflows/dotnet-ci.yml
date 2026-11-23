@@ -1,0 +1,99 @@
+name: .NET CI & Mutation Testing
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  build-and-test:
+    name: build-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up .NET SDK from global.json
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore solution dependencies
+        run: dotnet restore Shed.slnx
+
+      - name: Build solution (Release)
+        run: dotnet build Shed.slnx --configuration Release --no-restore
+
+      - name: Run unit and architecture tests
+        run: >-
+          dotnet test Shed.slnx
+          --configuration Release
+          --no-build
+          --verbosity normal
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dotnet-test-results
+          path: TestResults/
+          retention-days: 14
+          if-no-files-found: warn
+
+  mutation-testing:
+    name: mutation-testing
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET SDK from global.json
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore local .NET tools
+        run: dotnet tool restore
+
+      - name: Restore solution dependencies
+        run: dotnet restore Shed.slnx
+
+      - name: Run Stryker.NET mutation testing (advisory)
+        run: dotnet stryker --skip-version-check --output StrykerOutput
+
+      - name: Publish mutation summary to job summary
+        if: always()
+        run: |
+          REPORT=$(find StrykerOutput -type f -name 'mutation-report.md' | head -n 1 || true)
+          if [ -n "$REPORT" ]; then
+            cat "$REPORT" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No Stryker markdown report was generated." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload Stryker mutation reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: stryker-mutation-report
+          path: StrykerOutput/reports/
+          retention-days: 14
+          if-no-files-found: warn

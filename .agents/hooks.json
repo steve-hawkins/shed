@@ -1,5 +1,38 @@
 {
   "shed-otel-telemetry": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "python3 ./hooks/otel-telemetry.py",
+        "timeout": 5
+      }
+    ],
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "python3 ./hooks/otel-telemetry.py",
+        "timeout": 5
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ./hooks/otel-telemetry.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostInvocation": [
+      {
+        "type": "command",
+        "command": "python3 ./hooks/otel-telemetry.py",
+        "timeout": 5
+      }
+    ],
     "Stop": [
       {
         "type": "command",

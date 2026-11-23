@@ -179,6 +179,65 @@ public sealed class OpenTelemetryInstrumentationTests
     }
 
     [Fact]
+    public async Task SecondaryCollectorForwardsExplicitHeadersWhileRemainingIsolatedFromPrimary()
+    {
+        await using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseSetting("OTEL_EXPORTER_OTLP_ENDPOINT", "http://127.0.0.1:19180");
+                builder.UseSetting("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc");
+                builder.UseSetting("OTEL_EXPORTER_OTLP_HEADERS", "x-otlp-api-key=aspire-primary");
+                builder.UseSetting("OTEL_COLLECTOR_ENDPOINT", "http://127.0.0.1:4318");
+                builder.UseSetting("OTEL_COLLECTOR_PROTOCOL", "http/protobuf");
+                builder.UseSetting("OTEL_COLLECTOR_HEADERS", "Authorization=Basic Y29sbGVjdG9y");
+            });
+
+        using var client = factory.CreateClient();
+        using var response = await client.GetAsync("/telemetry");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var optionsMonitor = factory.Services.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>();
+
+        Assert.Equal("x-otlp-api-key=aspire-primary", optionsMonitor.Get($"{Extensions.PrimaryExporterPrefix}-traces").Headers);
+        Assert.Equal("x-otlp-api-key=aspire-primary", optionsMonitor.Get($"{Extensions.PrimaryExporterPrefix}-metrics").Headers);
+        Assert.Equal("x-otlp-api-key=aspire-primary", optionsMonitor.Get($"{Extensions.PrimaryExporterPrefix}-logs").Headers);
+
+        Assert.Equal("Authorization=Basic Y29sbGVjdG9y", optionsMonitor.Get($"{Extensions.CollectorExporterPrefix}-traces").Headers);
+        Assert.Equal("Authorization=Basic Y29sbGVjdG9y", optionsMonitor.Get($"{Extensions.CollectorExporterPrefix}-metrics").Headers);
+        Assert.Equal("Authorization=Basic Y29sbGVjdG9y", optionsMonitor.Get($"{Extensions.CollectorExporterPrefix}-logs").Headers);
+    }
+
+    [Fact]
+    public async Task EqualPrimaryAndCollectorEndpointsSkipDuplicateCollectorRegistration()
+    {
+        await using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseSetting("OTEL_EXPORTER_OTLP_ENDPOINT", "http://127.0.0.1:4318");
+                builder.UseSetting("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf");
+                builder.UseSetting("OTEL_COLLECTOR_ENDPOINT", "http://127.0.0.1:4318");
+                builder.UseSetting("OTEL_COLLECTOR_PROTOCOL", "http/protobuf");
+                builder.UseSetting("OTEL_COLLECTOR_HEADERS", "Authorization=Basic ZHVwbGljYXRl");
+            });
+
+        using var client = factory.CreateClient();
+        using var response = await client.GetAsync("/");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var optionsMonitor = factory.Services.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>();
+
+        // Primary exporter is configured for HTTP/protobuf signal endpoints
+        Assert.Equal(
+            new Uri("http://127.0.0.1:4318/v1/traces"),
+            optionsMonitor.Get($"{Extensions.PrimaryExporterPrefix}-traces").Endpoint);
+
+        // Secondary collector exporter was skipped due to endpoint equality, so its overrides were not applied
+        var collectorTraces = optionsMonitor.Get($"{Extensions.CollectorExporterPrefix}-traces");
+        Assert.NotEqual("Authorization=Basic ZHVwbGljYXRl", collectorTraces.Headers);
+        Assert.NotEqual(new Uri("http://127.0.0.1:4318/v1/traces"), collectorTraces.Endpoint);
+    }
+
+    [Fact]
     public async Task PrimaryHttpProtobufExporterConfiguresDistinctSignalEndpoints()
     {
         await using var factory = new WebApplicationFactory<Program>()

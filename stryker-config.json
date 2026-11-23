@@ -1,0 +1,26 @@
+{
+  "stryker-config": {
+    "solution": "Shed.slnx",
+    "configuration": "Release",
+    "concurrency": 2,
+    "break-on-initial-test-failure": true,
+    "report-file-name": "mutation-report",
+    "mutate": [
+      "**/*",
+      "!**/Program.cs",
+      "!**/Migrations/**"
+    ],
+    "reporters": [
+      "Progress",
+      "ClearText",
+      "Html",
+      "Markdown",
+      "Json"
+    ],
+    "thresholds": {
+      "high": 80,
+      "low": 60,
+      "break": 0
+    }
+  }
+}

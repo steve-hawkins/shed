@@ -2,8 +2,8 @@
   "title": "Shed — AI Software Factory Observability & ROI",
   "uid": "shed-ai-factory-roi",
   "schemaVersion": 39,
-  "version": 1,
-  "refresh": "30s",
+  "version": 2,
+  "refresh": "10s",
   "tags": ["shed", "software-factory", "ai-observability", "finops"],
   "timezone": "browser",
   "editable": true,
@@ -24,12 +24,20 @@
         "refresh": 1
       },
       {
+        "name": "DS_LOKI",
+        "label": "Logs (Loki)",
+        "type": "datasource",
+        "query": "loki",
+        "refresh": 1
+      },
+      {
         "name": "stage",
         "label": "Stage",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-        "query": "label_values(shed_ai_turns_total, stage)",
+        "query": "label_values({__name__=~\"shed_ai_.*\"}, stage)",
         "includeAll": true,
+        "allValue": ".*",
         "multi": true,
         "refresh": 2,
         "current": { "text": "All", "value": "$__all" }
@@ -38,11 +46,37 @@
   },
   "panels": [
     {
+      "id": 10,
+      "type": "stat",
+      "title": "Active Agents (Live)",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "text", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(last_over_time(shed_ai_active_agents{stage=~\"$stage\"}[10m])) or vector(0)"
+        }
+      ]
+    },
+    {
       "id": 1,
       "type": "stat",
       "title": "Google AI Pro ROI Multiplier (API-Equiv ÷ £18.99)",
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "gridPos": { "h": 5, "w": 5, "x": 4, "y": 0 },
       "fieldConfig": {
         "defaults": {
           "unit": "none",
@@ -60,7 +94,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(shed_ai_estimated_cost_gbp_GBP_total{stage=~\"$stage\"}[$__range])) / 18.99"
+          "expr": "sum(increase(shed_ai_estimated_cost_gbp_GBP_total{stage=~\"$stage\"}[$__range]) or ((last_over_time(shed_ai_estimated_cost_gbp_GBP_total{stage=~\"$stage\"}[$__range]) - last_over_time(shed_ai_estimated_cost_gbp_GBP_total{stage=~\"$stage\"}[24h] offset $__range)) >= 0) or last_over_time(shed_ai_estimated_cost_gbp_GBP_total{stage=~\"$stage\"}[$__range])) / 18.99"
         }
       ]
     },
@@ -69,7 +103,7 @@
       "type": "stat",
       "title": "Estimated API-Equivalent Spend",
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "gridPos": { "h": 5, "w": 5, "x": 9, "y": 0 },
       "fieldConfig": {
         "defaults": {
           "unit": "currencyGBP",
@@ -79,7 +113,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(shed_ai_estimated_cost_gbp_GBP_total{stage=~\"$stage\"}[$__range]))"
+          "expr": "sum(increase(shed_ai_estimated_cost_gbp_GBP_total{stage=~\"$stage\"}[$__range]) or ((last_over_time(shed_ai_estimated_cost_gbp_GBP_total{stage=~\"$stage\"}[$__range]) - last_over_time(shed_ai_estimated_cost_gbp_GBP_total{stage=~\"$stage\"}[24h] offset $__range)) >= 0) or last_over_time(shed_ai_estimated_cost_gbp_GBP_total{stage=~\"$stage\"}[$__range]))"
         }
       ]
     },
@@ -88,7 +122,7 @@
       "type": "stat",
       "title": "Prompt Cache Savings",
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "gridPos": { "h": 5, "w": 5, "x": 14, "y": 0 },
       "fieldConfig": {
         "defaults": {
           "unit": "currencyGBP",
@@ -98,7 +132,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(shed_ai_cache_savings_gbp_GBP_total{stage=~\"$stage\"}[$__range]))"
+          "expr": "sum(increase(shed_ai_cache_savings_gbp_GBP_total{stage=~\"$stage\"}[$__range]) or ((last_over_time(shed_ai_cache_savings_gbp_GBP_total{stage=~\"$stage\"}[$__range]) - last_over_time(shed_ai_cache_savings_gbp_GBP_total{stage=~\"$stage\"}[24h] offset $__range)) >= 0) or last_over_time(shed_ai_cache_savings_gbp_GBP_total{stage=~\"$stage\"}[$__range]))"
         }
       ]
     },
@@ -107,7 +141,7 @@
       "type": "stat",
       "title": "Prompt Cache Hit Ratio",
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "gridPos": { "h": 5, "w": 5, "x": 19, "y": 0 },
       "fieldConfig": {
         "defaults": {
           "unit": "percentunit",
@@ -117,65 +151,107 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(shed_ai_tokens_total{stage=~\"$stage\",token_type=\"cache_read\"}[$__range])) / clamp_min(sum(increase(shed_ai_tokens_total{stage=~\"$stage\",token_type=~\"input|cache_read\"}[$__range])), 1)"
+          "expr": "sum(increase(shed_ai_tokens_total{stage=~\"$stage\",token_type=\"cache_read\"}[$__range]) or ((last_over_time(shed_ai_tokens_total{stage=~\"$stage\",token_type=\"cache_read\"}[$__range]) - last_over_time(shed_ai_tokens_total{stage=~\"$stage\",token_type=\"cache_read\"}[24h] offset $__range)) >= 0) or last_over_time(shed_ai_tokens_total{stage=~\"$stage\",token_type=\"cache_read\"}[$__range])) / clamp_min(sum(increase(shed_ai_tokens_total{stage=~\"$stage\",token_type=~\"input|cache_read\"}[$__range]) or ((last_over_time(shed_ai_tokens_total{stage=~\"$stage\",token_type=~\"input|cache_read\"}[$__range]) - last_over_time(shed_ai_tokens_total{stage=~\"$stage\",token_type=~\"input|cache_read\"}[24h] offset $__range)) >= 0) or last_over_time(shed_ai_tokens_total{stage=~\"$stage\",token_type=~\"input|cache_read\"}[$__range])), 1)"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "logs",
+      "title": "Live Builder Activity Stream (Loki)",
+      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 5 },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service_name=\"agy-cli\", service_namespace=\"software-factory\"} |~ \"^\\\\[($stage) \""
         }
       ]
     },
     {
       "id": 5,
       "type": "timeseries",
-      "title": "Tokens Consumed by Model & Type",
+      "title": "Cumulative Tokens by Model & Type",
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "custom": { "drawStyle": "bars", "stacking": { "mode": "normal" } }
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "stepAfter",
+            "fillOpacity": 15,
+            "stacking": { "mode": "normal" }
+          }
         }
       },
       "targets": [
         {
           "refId": "A",
           "legendFormat": "{{model}} ({{token_type}})",
-          "expr": "sum by (model, token_type) (increase(shed_ai_tokens_total{stage=~\"$stage\"}[$__rate_interval]))"
+          "expr": "sum by (model, token_type) (last_over_time(shed_ai_tokens_total{stage=~\"$stage\"}[1h]))"
         }
       ]
     },
     {
       "id": 6,
       "type": "timeseries",
-      "title": "Estimated API-Equivalent Spend by Stage & Issue",
+      "title": "Cumulative Estimated Spend by Stage & Issue",
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyGBP"
+          "unit": "currencyGBP",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "stepAfter",
+            "fillOpacity": 10
+          }
         }
       },
       "targets": [
         {
           "refId": "A",
           "legendFormat": "{{stage}} / issue #{{issue}}",
-          "expr": "sum by (stage, issue) (increase(shed_ai_estimated_cost_gbp_GBP_total{stage=~\"$stage\"}[$__rate_interval]))"
+          "expr": "sum by (stage, issue) (last_over_time(shed_ai_estimated_cost_gbp_GBP_total{stage=~\"$stage\"}[1h]))"
         }
       ]
     },
     {
       "id": 7,
       "type": "timeseries",
-      "title": "Agent Turns & Tool Calls",
+      "title": "Tool Calls & Errors (Cumulative)",
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 13 },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 21 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "stepAfter"
+          }
+        }
+      },
       "targets": [
         {
           "refId": "A",
-          "legendFormat": "Turns ({{stage}} / {{termination_reason}})",
-          "expr": "sum by (stage, termination_reason) (increase(shed_ai_turns_total{stage=~\"$stage\"}[$__rate_interval]))"
+          "legendFormat": "{{tool_name}} ({{status}})",
+          "expr": "sum by (tool_name, status) (last_over_time(shed_ai_tool_calls_total{stage=~\"$stage\"}[1h]))"
         },
         {
           "refId": "B",
-          "legendFormat": "Tool Errors ({{stage}})",
-          "expr": "sum by (stage) (increase(shed_ai_tool_calls_total{stage=~\"$stage\",status=\"error\"}[$__rate_interval]))"
+          "legendFormat": "Turns ({{stage}} / {{termination_reason}})",
+          "expr": "sum by (stage, termination_reason) (last_over_time(shed_ai_turns_total{stage=~\"$stage\"}[1h]))"
         }
       ]
     },
@@ -184,7 +260,7 @@
       "type": "timeseries",
       "title": "Turn Wall-Clock Duration (seconds)",
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 13 },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 21 },
       "fieldConfig": {
         "defaults": { "unit": "s" }
       },
@@ -192,7 +268,7 @@
         {
           "refId": "A",
           "legendFormat": "{{stage}} / {{model}}",
-          "expr": "avg by (stage, model) (shed_ai_turn_duration_seconds{stage=~\"$stage\"})"
+          "expr": "avg by (stage, model) (last_over_time(shed_ai_turn_duration_seconds{stage=~\"$stage\"}[1h]))"
         }
       ]
     },
@@ -201,7 +277,7 @@
       "type": "table",
       "title": "Recent Software Factory Traces (Tempo)",
       "datasource": { "type": "tempo", "uid": "${DS_TEMPO}" },
-      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 20 },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 28 },
       "targets": [
         {
           "refId": "A",

@@ -60,7 +60,7 @@ jobs:
       - name: Validate JSON files
         run: |
           set -euo pipefail
-          for file in $(find .github .devcontainer .agents infra/factory-observability -type f -name '*.json' | sort); do
+          for file in $(find .github .devcontainer .agents .config infra/factory-observability -type f -name '*.json' | sort) global.json stryker-config.json; do
             echo "Validating JSON: $file"
             jq empty "$file"
           done
